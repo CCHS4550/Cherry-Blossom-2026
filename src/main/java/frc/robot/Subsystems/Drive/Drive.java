@@ -280,13 +280,15 @@ public class Drive extends SubsystemBase {
             new PIDConstants(1.6, 0.0, 0.3), new PIDConstants(5.0, 0.0, 0.0)),
         Constants.DriveConstants.ppConfig,
         () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
-        this);
+        this);    
 
     // set the contraints of our setpoint
     setPointGenerator =
         new SwerveSetpointGenerator(
             Constants.DriveConstants.ppConfig,
             Constants.DriveConstants.maxModuleRotSpeedRadiansPerSec);
+
+    previousSetpoint = new SwerveSetpoint(getChassisSpeeds(), getModuleStates(), null);
     // Initialize the previous setpoint to the robot's current speeds & module states
     ChassisSpeeds currentSpeeds =
         getChassisSpeeds(); // Method to get current robot-relative chassis speeds
