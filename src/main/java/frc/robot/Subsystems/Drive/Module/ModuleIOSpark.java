@@ -54,6 +54,7 @@ public class ModuleIOSpark implements ModuleIO {
   private final AnalogInput absoluteAnalogInput;
   private final int index;
 
+
   // closed loop control for both motors
   private final SparkClosedLoopController driveController;
   private final SparkClosedLoopController turnController;

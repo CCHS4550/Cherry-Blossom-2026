@@ -84,7 +84,7 @@ public class Drive extends SubsystemBase {
   private final Module[] modules = new Module[4]; // the 4 modules
 
   private final SysIdRoutine sysId;
-
+  private boolean isFieldCentric = true;
   // configure gyro disconnection alert
   private final Alert gyroDCAlert =
       new Alert("Disconnected gyro, using kinematics as fallback.", AlertType.kError);
@@ -121,7 +121,8 @@ public class Drive extends SubsystemBase {
   private double maxRotSpeedRadPerSecOnTheFly = 6;
   private double maxRotAccelRadPerSecSqOnTheFly = 10;
   private double idealEndVeloOntheFly = 0;
-
+  
+  private boolean fieldCentric = false;
   /**
    * Pid Controller for drive at angle.
    *
@@ -447,6 +448,10 @@ public class Drive extends SubsystemBase {
    *
    * @return the systemstate that our systemState variable will be set to
    */
+
+   public void toggleDriveMode() {
+    isFieldCentric = !isFieldCentric;
+}
   private SystemState handleStateTransition() {
 
     // if we are not in a command control state, set the early cancel to true
@@ -532,6 +537,10 @@ public class Drive extends SubsystemBase {
    * @param speeds the desired chassis speeds, in XY units of meters per second and omega units of
    *     radians per second
    */
+
+
+
+
   private void runVelocity(ChassisSpeeds speeds) {
 
     // calculate and optomize our given speeds
@@ -629,32 +638,47 @@ public class Drive extends SubsystemBase {
    */
   public void joystickDrive(double xInput, double yInput, double omegaInput) {
 
-    // convert the 2 seperate x & y inputs into an overall translation 2d of 1 linear speed, just
-    // found as the hypotenuse of the x & y
+    // Convert joystick inputs into a Translation2d
     Translation2d linearVelocity =
-        getLinearVelocityFromXY(xInput, yInput, Constants.DriveConstants.deadband);
+        getLinearVelocityFromXY(
+            xInput,
+            yInput,
+            Constants.DriveConstants.deadband);
+
+    
 
     // Apply rotation deadband
-    double omega = MathUtil.applyDeadband(omegaInput, Constants.DriveConstants.deadband);
+    double omega = MathUtil.applyDeadband(
+        omegaInput,
+        Constants.DriveConstants.deadband);
 
-    // Square rotation value for more precise control
+    // Square rotation for finer control
     omega = Math.copySign(omega * omega, omega);
 
-    // Convert to field relative speeds
-    ChassisSpeeds speeds =
-        new ChassisSpeeds(
-            linearVelocity.getX() * getMaxLinearSpeed(),
-            linearVelocity.getY() * getMaxLinearSpeed(),
-            omega * getMaxAngularSpeed());
-    boolean isFlipped =
-        DriverStation.getAlliance().isPresent()
-            && DriverStation.getAlliance().get() == Alliance.Red;
+    // Scale to max speeds
+    double xSpeed = linearVelocity.getX() * getMaxLinearSpeed();
+    double ySpeed = linearVelocity.getY() * getMaxLinearSpeed();
+    double turnSpeed = omega * getMaxAngularSpeed();
 
-    // set the bot to run at the chassis speeds
-    runVelocity(
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            speeds, isFlipped ? getRotation().plus(new Rotation2d(Math.PI)) : getRotation()));
-  }
+    // Construct desired chassis speeds
+    ChassisSpeeds chassisSpeeds;
+
+   
+    chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, turnSpeed, gyroInputs.yawPosition.minus(new Rotation2d(Degrees.of(90))));
+    
+  
+    SwerveModuleState[] moduleStates =
+        kinematics.toSwerveModuleStates(
+            chassisSpeeds); // turn the speeds to module states(drive motor speed and
+    // turn motor
+    // angle)
+
+    for (int i = 0; i < 4; i++) {
+      modules[i].runSwerveState(moduleStates[i]);
+    } 
+    
+    //runVelocity(chassisSpeeds);
+}
   /**
    * sets the bot to drive at any given x & y input, but stays at a given angle called with
    * joysticks providing the x and y speeds
@@ -1294,6 +1318,11 @@ public class Drive extends SubsystemBase {
   public void setEarlyCommandCancel(boolean should) {
     shouldCancelCommandEarly = () -> should;
   }
+
+public void resetZero() {
+    // TODO Auto-generated method stub
+    gyroIO.reset();
+}
 
   // // java lock to implement thread safe
   // static final Lock odometryLock = new ReentrantLock();
