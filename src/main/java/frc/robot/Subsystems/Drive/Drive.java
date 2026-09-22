@@ -667,17 +667,17 @@ public class Drive extends SubsystemBase {
     chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, turnSpeed, gyroInputs.yawPosition.minus(new Rotation2d(Degrees.of(90))));
     
   
-    SwerveModuleState[] moduleStates =
-        kinematics.toSwerveModuleStates(
-            chassisSpeeds); // turn the speeds to module states(drive motor speed and
-    // turn motor
-    // angle)
+    // SwerveModuleState[] moduleStates =
+    //     kinematics.toSwerveModuleStates(
+    //         chassisSpeeds); // turn the speeds to module states(drive motor speed and
+    // // turn motor
+    // // angle)
 
-    for (int i = 0; i < 4; i++) {
-      modules[i].runSwerveState(moduleStates[i]);
-    } 
+    // for (int i = 0; i < 4; i++) {
+    //   modules[i].runSwerveState(moduleStates[i]);
+    // } 
     
-    //runVelocity(chassisSpeeds);
+    runVelocity(chassisSpeeds);
 }
   /**
    * sets the bot to drive at any given x & y input, but stays at a given angle called with
