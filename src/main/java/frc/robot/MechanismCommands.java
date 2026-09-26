@@ -82,6 +82,19 @@ public class MechanismCommands {
     return shootThenIndex;
   }
 
+  public static Command index(Superstructure superstructure)
+  {
+    Command thisCommand = new SequentialCommandGroup(
+        new InstantCommand(
+                () ->
+                    superstructure.barrels.setWantedState(
+                        wantedBarrelState.INDEX)), // index the barrel
+            new WaitUntilCommand(
+                () -> superstructure.barrels.isAtAngle) // wait until we are at angle, then move on
+    );
+    return thisCommand;
+  }
+
   public static Command shootSix(Superstructure superstructure) {
     Command shootAll =
         new SequentialCommandGroup(

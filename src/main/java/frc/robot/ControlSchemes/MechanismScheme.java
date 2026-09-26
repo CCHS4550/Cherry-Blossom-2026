@@ -79,5 +79,9 @@ public class MechanismScheme {
     controller
         .rightBumper()
         .onTrue(new InstantCommand(() -> superstructure.setWantedState(wantedState.FILLING_AIR)));
+
+      controller.a().onTrue(MechanismCommands.index(superstructure));
+
   }
+
 }
